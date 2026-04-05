@@ -6,17 +6,20 @@ scene-db splits driving logs into time-based scene chunks, extracts features, an
 
 ## Features
 
-- KITTI raw dataset ingestion
+- **Multi-dataset support**: KITTI raw data and nuScenes
 - Time-based scene chunking (configurable duration)
 - Automatic feature extraction (speed, distance)
-- Rule-based scene captioning
-- Text search across scene captions
+- Rule-based scene captioning + **VLM captioning** (OpenAI GPT-4o)
+- Text search + **semantic search** (sentence-transformers / OpenAI embeddings)
 - Scene export to directory
 
 ## Installation
 
 ```bash
-pip install -e .
+pip install -e .                    # Core (KITTI + text search)
+pip install -e ".[embedding]"       # + semantic search (sentence-transformers)
+pip install -e ".[vlm]"             # + VLM captioning (OpenAI)
+pip install -e ".[all]"             # Everything
 ```
 
 ## Quick Start
@@ -55,7 +58,21 @@ scene-db export --id kitti_2011_09_26_drive_0001_sync_000 -o ./my_scene
 
 Copies all associated files (images, point clouds, oxts data) into the output directory with a `scene_info.txt` metadata file.
 
-### 4. Check index status
+### 4. Semantic search (optional)
+
+```bash
+pip install -e ".[embedding]"
+scene-db index --embed              # Build embeddings
+scene-db search -s "car turning at intersection"
+```
+
+### 5. nuScenes ingestion
+
+```bash
+scene-db ingest /path/to/nuscenes --dataset-name nuscenes --nuscenes-version v1.0-mini
+```
+
+### 6. Check index status
 
 ```bash
 scene-db index
@@ -65,28 +82,36 @@ scene-db index
 
 | Command | Description |
 |---|---|
-| `scene-db ingest <path>` | Ingest a KITTI sequence directory |
+| `scene-db ingest <path>` | Ingest a dataset (KITTI or nuScenes) |
 | `scene-db index` | Show index status |
+| `scene-db index --embed` | Build embedding index for semantic search |
 | `scene-db search <query>` | Search scenes by caption text |
+| `scene-db search -s <query>` | Semantic search using embeddings |
 | `scene-db export --id <id>` | Export scene files to a directory |
 
 ### Options
 
 ```
 scene-db ingest:
-  --dataset-name TEXT    Dataset name [default: kitti]
-  --chunk-duration FLOAT Chunk duration in seconds [default: 5.0]
-  --db PATH              Database path [default: ~/.scene-db/scene.db]
+  --dataset-name TEXT       Dataset name: kitti or nuscenes [default: kitti]
+  --chunk-duration FLOAT    Chunk duration in seconds [default: 5.0]
+  --nuscenes-version TEXT   nuScenes version [default: v1.0-mini]
+  --db PATH                 Database path [default: ~/.scene-db/scene.db]
+
+scene-db search:
+  -s, --semantic            Use semantic search (requires embeddings)
+  -k INTEGER                Number of results [default: 10]
+  --db PATH                 Database path
 
 scene-db export:
-  --id TEXT              Scene chunk ID (required)
-  -o, --output PATH      Output directory [default: ./export]
-  --db PATH              Database path
+  --id TEXT                 Scene chunk ID (required)
+  -o, --output PATH         Output directory [default: ./export]
+  --db PATH                 Database path
 ```
 
-## KITTI Data Format
+## Supported Datasets
 
-scene-db expects KITTI raw data in the standard directory structure:
+### KITTI
 
 ```
 <sequence_dir>/
@@ -94,35 +119,50 @@ scene-db expects KITTI raw data in the standard directory structure:
 │   ├── timestamps.txt
 │   └── data/
 │       ├── 0000000000.txt
-│       ├── 0000000001.txt
 │       └── ...
 ├── image_00/data/
-├── image_01/data/
 ├── image_02/data/
-├── image_03/data/
 └── velodyne_points/data/
 ```
 
-Download KITTI raw data from: https://www.cvlibs.net/datasets/kitti/raw_data.php
+Download: https://www.cvlibs.net/datasets/kitti/raw_data.php
+
+### nuScenes
+
+```
+<dataroot>/
+├── v1.0-mini/         # metadata JSONs
+│   ├── scene.json
+│   ├── sample.json
+│   ├── sample_data.json
+│   └── ego_pose.json
+├── samples/           # keyframe sensor data
+└── sweeps/            # non-keyframe sensor data
+```
+
+Download: https://www.nuscenes.org/download
 
 ## Architecture
 
 ```
-SceneChunk
-├── id: "kitti_{sequence}_{chunk_index}"
-├── features: avg_speed_kmh, distance_m
-├── caption: rule-based text description
-└── file_refs: [image, pointcloud, oxts files]
+Dataset (KITTI / nuScenes)
+  → Ingest & Chunk (5s windows)
+    → Feature Extraction (speed, distance)
+      → Captioning (rule-based or VLM)
+        → SQLite Storage
+          → Search (text LIKE or semantic embedding)
+            → Export
 ```
 
 - **Storage**: SQLite (`~/.scene-db/scene.db`)
 - **Chunking**: Fixed-length time windows (default 5 seconds)
-- **Search**: SQL LIKE on caption text
+- **Search**: SQL LIKE on caption text, or cosine similarity on embeddings
+- **Captioning**: Rule-based (default) or VLM via OpenAI API
 
 ## Development
 
 ```bash
-git clone https://github.com/your-username/scene-db.git
+git clone https://github.com/rsasaki0109/scene-db.git
 cd scene-db
 python3 -m venv .venv
 source .venv/bin/activate
