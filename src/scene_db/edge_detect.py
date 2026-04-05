@@ -95,6 +95,30 @@ def detect_edge_cases(conn: sqlite3.Connection) -> list[EdgeCase]:
                 score=min(combined, 1.0),
             ))
 
+        # --- IMU-critical edge cases (would fail without IMU) ---
+
+        # Low speed + low yaw + low accel = featureless/degenerate environment
+        # LiDAR-only SLAM degenerates when there are no distinctive features
+        if (s.avg_speed_kmh < 5.0 and s.max_yaw_rate_degs < 2.0
+                and s.max_decel_ms2 < 0.5 and s.distance_m > 0):
+            cases.append(EdgeCase(
+                scene=s, category="localization",
+                reason=(f"Low dynamics ({s.avg_speed_kmh:.0f} km/h, yaw {s.max_yaw_rate_degs:.1f} deg/s) "
+                        f"- LiDAR degeneration risk, IMU critical for motion prior"),
+                severity="warning",
+                score=0.6,
+            ))
+
+        # IMU drift indicator: very high speed from integration (unrealistic)
+        if s.avg_speed_kmh > 200:
+            cases.append(EdgeCase(
+                scene=s, category="localization",
+                reason=(f"IMU drift detected ({s.avg_speed_kmh:.0f} km/h from integration) "
+                        f"- needs LiDAR/GNSS correction"),
+                severity="critical",
+                score=1.0,
+            ))
+
         # --- Perception edge cases ---
 
         # Hard braking (pitch shift affects LiDAR/camera FOV)
