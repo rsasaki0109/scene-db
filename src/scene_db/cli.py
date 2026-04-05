@@ -121,6 +121,61 @@ def search_cmd(
 
 
 @app.command()
+def stats(
+    db: Optional[Path] = typer.Option(None, help="Database path"),
+) -> None:
+    """Show statistics about the scene database."""
+    conn = get_connection(db)
+    scenes = list_all_scenes(conn)
+    conn.close()
+
+    if not scenes:
+        typer.echo("Database is empty.")
+        return
+
+    # Aggregate stats
+    sequences = set()
+    datasets = set()
+    total_frames = 0
+    speeds = []
+    decels = []
+    yaw_rates = []
+
+    for s in scenes:
+        sequences.add(f"{s.dataset_name}/{s.sequence_id}")
+        datasets.add(s.dataset_name)
+        total_frames += s.end_frame - s.start_frame + 1
+        speeds.append(s.avg_speed_kmh)
+        decels.append(s.max_decel_ms2)
+        yaw_rates.append(s.max_yaw_rate_degs)
+
+    # Caption category counts
+    categories: dict[str, int] = {}
+    for s in scenes:
+        for kw in ["stationary", "moving slowly", "moving forward", "high speed",
+                    "braking", "hard braking", "turning", "sharp turn", "gentle curve"]:
+            if kw in s.caption:
+                categories[kw] = categories.get(kw, 0) + 1
+
+    typer.echo(f"Scenes: {len(scenes)}  |  Sequences: {len(sequences)}  |  Datasets: {', '.join(datasets)}")
+    typer.echo(f"Total frames: {total_frames}")
+    typer.echo()
+    typer.echo("Speed distribution:")
+    typer.echo(f"  min {min(speeds):.0f} / avg {sum(speeds)/len(speeds):.0f} / max {max(speeds):.0f} km/h")
+    typer.echo()
+    typer.echo("Max deceleration:")
+    typer.echo(f"  min {min(decels):.1f} / avg {sum(decels)/len(decels):.1f} / max {max(decels):.1f} m/s\u00b2")
+    typer.echo()
+    typer.echo("Max yaw rate:")
+    typer.echo(f"  min {min(yaw_rates):.1f} / avg {sum(yaw_rates)/len(yaw_rates):.1f} / max {max(yaw_rates):.1f} \u00b0/s")
+    typer.echo()
+    typer.echo("Scene categories:")
+    for kw, count in sorted(categories.items(), key=lambda x: -x[1]):
+        bar = "\u2588" * count
+        typer.echo(f"  {kw:16s} {count:3d} {bar}")
+
+
+@app.command()
 def export(
     id: str = typer.Option(..., "--id", help="Scene chunk ID to export"),
     output: Path = typer.Option("./export", "-o", "--output", help="Output directory"),

@@ -131,9 +131,9 @@ def generate_caption(
         parts.append("gentle curve")
 
     # Braking behavior
-    if max_decel_ms2 > 4.0:
+    if max_decel_ms2 > 3.0:
         parts.append("hard braking")
-    elif max_decel_ms2 > 2.0:
+    elif max_decel_ms2 > 1.0:
         parts.append("braking")
 
     return ", ".join(parts)
