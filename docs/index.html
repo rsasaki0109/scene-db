@@ -599,7 +599,7 @@
     <div class="container">
         <h2>Real edge cases from KITTI</h2>
         <p>
-            These scenes were found by running <code>scene-db</code> on 13 KITTI sequences (66 scenes, 2913 frames).
+            These scenes were found by running <code>scene-db</code> on 25 KITTI + nuScenes + GLIM rosbag (210 scenes, 8210 frames).
             Each GIF is a 5-second chunk extracted by the tool.
         </p>
 
@@ -755,6 +755,48 @@
                         <span class="gallery-tag tag-yaw">yaw 13.2 &deg;/s</span>
                         <span class="gallery-tag tag-decel">decel 2.2 m/s&sup2;</span>
                         <span class="gallery-tag tag-speed">2 km/h</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gallery-card">
+                <img src="assets/sharp-turn2.gif" alt="Sharp turn at low speed" loading="lazy">
+                <div class="gallery-card-body">
+                    <h3>Sharp turn #2 &mdash; low-speed yaw peak</h3>
+                    <p>drive_0046 frame 98-124. Near-maximum yaw rate at very low speed.
+                       Wheel encoder resolution limits and IMU gyro bias dominate at this speed.</p>
+                    <div class="gallery-tags">
+                        <span class="gallery-tag tag-label">Localization</span>
+                        <span class="gallery-tag tag-yaw">yaw 29.4 &deg;/s</span>
+                        <span class="gallery-tag tag-speed">15 km/h</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gallery-card">
+                <img src="assets/turn-029.gif" alt="Intersection turn" loading="lazy">
+                <div class="gallery-card-body">
+                    <h3>Intersection turn &mdash; multi-lane crossing</h3>
+                    <p>drive_0029 frame 294-342. Turning through a complex intersection.
+                       Map matching ambiguity is highest here &mdash; multiple lane hypotheses.</p>
+                    <div class="gallery-tags">
+                        <span class="gallery-tag tag-label">Localization</span>
+                        <span class="gallery-tag tag-yaw">yaw 27.8 &deg;/s</span>
+                        <span class="gallery-tag tag-speed">22 km/h</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gallery-card">
+                <img src="assets/hard-brake-kitti.gif" alt="Hard braking in KITTI" loading="lazy">
+                <div class="gallery-card-body">
+                    <h3>Hard braking &mdash; first KITTI hard-brake detected</h3>
+                    <p>drive_0061 frame 637-685. Only hard braking event found across 25 KITTI sequences.
+                       Pitch change shifts LiDAR FOV and camera horizon simultaneously.</p>
+                    <div class="gallery-tags">
+                        <span class="gallery-tag tag-label">Loc + Per</span>
+                        <span class="gallery-tag tag-decel">hard braking</span>
+                        <span class="gallery-tag tag-speed">21 km/h</span>
                     </div>
                 </div>
             </div>
