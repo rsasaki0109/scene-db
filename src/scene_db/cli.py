@@ -159,6 +159,49 @@ def search_cmd(
     conn.close()
 
 
+@app.command(name="edge-cases")
+def edge_cases_cmd(
+    category: Optional[str] = typer.Option(None, "--category", "-c", help="Filter: localization, perception, both"),
+    severity: Optional[str] = typer.Option(None, "--severity", help="Filter: critical, warning, info"),
+    limit: int = typer.Option(20, "-n", help="Max results to show"),
+    db: Optional[Path] = typer.Option(None, help="Database path"),
+) -> None:
+    """Detect and list edge cases for localization and perception."""
+    from scene_db.edge_detect import detect_edge_cases
+
+    conn = get_connection(db)
+    cases = detect_edge_cases(conn)
+    conn.close()
+
+    if category:
+        cases = [c for c in cases if c.category == category]
+    if severity:
+        cases = [c for c in cases if c.severity == severity]
+
+    if not cases:
+        typer.echo("No edge cases detected.")
+        return
+
+    # Summary
+    n_crit = sum(1 for c in cases if c.severity == "critical")
+    n_warn = sum(1 for c in cases if c.severity == "warning")
+    n_info = sum(1 for c in cases if c.severity == "info")
+    typer.echo(f"Detected {len(cases)} edge cases: "
+               f"{n_crit} critical, {n_warn} warning, {n_info} info\n")
+
+    severity_icons = {"critical": "\u2716", "warning": "\u26a0", "info": "\u2139"}
+    category_colors = {"localization": "LOC", "perception": "PER", "both": "L+P"}
+
+    for c in cases[:limit]:
+        icon = severity_icons[c.severity]
+        cat = category_colors.get(c.category, c.category)
+        typer.echo(f"  {icon} [{cat}] [{c.scene.id}]")
+        typer.echo(f"    {c.reason}")
+        typer.echo(f"    {c.scene.caption}")
+        typer.echo(f"    score: {c.score:.2f} | frames {c.scene.start_frame}-{c.scene.end_frame}")
+        typer.echo()
+
+
 @app.command()
 def stats(
     db: Optional[Path] = typer.Option(None, help="Database path"),
