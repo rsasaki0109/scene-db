@@ -121,14 +121,51 @@ scene-db edge-cases:
 
 ## Tested Datasets
 
-| Source | Type | Sensors | Scenes | Link |
-|---|---|---|---|---|
-| KITTI (25 seq) | Vehicle | LiDAR+Camera+GPS/IMU | 147 | [kitti](https://www.cvlibs.net/datasets/kitti/raw_data.php) |
-| nuScenes mini | Vehicle | 6cam+LiDAR+RADAR | 40 | [nuscenes](https://www.nuscenes.org/download) |
-| GLIM (Ouster) | Handheld | OS1-128 + IMU | 23 | [glim](https://github.com/koide3/glim) |
-| Cartographer 3D | Backpack | 2x VLP-16 + IMU | 243 | [cartographer](https://google-cartographer-ros.readthedocs.io/) |
-| PPC Dataset | Vehicle | GNSS + IMU | 2354 | [ppc](https://github.com/taroz/PPC-Dataset) |
-| **Total** | | | **2807** | **97,447 frames** |
+| Source | Type | Sensors | Scenes | Key Edge Cases | Link |
+|---|---|---|---|---|---|
+| KITTI (25 seq) | Vehicle | LiDAR+Camera+GPS/IMU | 147 | yaw 30°/s, 77 km/h, hard brake | [kitti](https://www.cvlibs.net/datasets/kitti/raw_data.php) |
+| nuScenes mini | Vehicle | 6cam+LiDAR+RADAR | 40 | - | [nuscenes](https://www.nuscenes.org/download) |
+| GLIM (Ouster) | Handheld | OS1-128 + IMU | 23 | IMU drift (9→588 km/h) | [glim](https://github.com/koide3/glim) |
+| Cartographer 3D | Backpack | 2x VLP-16 + IMU | 243 | 20min drift test | [cartographer](https://google-cartographer-ros.readthedocs.io/) |
+| PPC Dataset | Vehicle | GNSS + IMU | 2354 | Urban canyon, loop closure | [ppc](https://github.com/taroz/PPC-Dataset) |
+| AIST Park | Vehicle | Ouster OS1 + IMU | 29 | **decel 11.2 m/s² (max)** | [zenodo](https://zenodo.org/records/6836915) |
+| Flatwall | Handheld | Livox + IMU | 7 | **LiDAR degeneration** | [zenodo](https://zenodo.org/records/7641866) |
+| **Total** | | | **2843** | | **99,537 frames** |
+
+## LiDAR SLAM Validation Guide
+
+Which data to use for testing your LiDAR-IMU SLAM / localization system:
+
+| Test Case | Recommended Data | Why |
+|---|---|---|
+| **Basic sanity check** | GLIM os1_128 (491 MB, 115s) | Small, Ouster, easy to run |
+| **Aggressive dynamics** | AIST Park (2.1 GB, 144s) | decel 11.2 m/s², hard braking throughout |
+| **LiDAR degeneration** | Flatwall (306 MB, 33s) | Wall-only environment, scan matching fails |
+| **Long-term drift** | Cartographer 3D (9.3 GB, 20min) | 20 minutes of continuous operation |
+| **Loop closure** | PPC Tokyo run1/run2 | GPS ground truth + loop detection |
+| **Urban canyon GNSS** | PPC Nagoya/Tokyo | Multipath, signal blockage |
+| **High yaw rate** | KITTI drive_0014 / PPC | yaw 30°/s turning stress |
+
+### Example: Testing with Ouster data (GLIM / AIST Park)
+
+```bash
+# Remap topics for your system
+ros2 launch your_lio_package lio.launch.xml
+# points_raw → /os_cloud_node/points
+# imu_raw    → /os_cloud_node/imu
+ros2 bag play aist_park_01.bag --clock
+```
+
+### Sequence Analysis for SLAM
+
+```bash
+scene-db sequences   # distance, duration, loop detection, revisit count
+```
+
+```
+ppc/tokyo_run1     9.9 km  40 min  ✓ 2m   1386 revisits
+ppc/tokyo_run2     6.9 km  30 min  ✓ 1m   1663 revisits
+```
 
 ## Architecture
 
