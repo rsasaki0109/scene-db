@@ -203,6 +203,56 @@ def edge_cases_cmd(
 
 
 @app.command()
+def sequences(
+    loop_threshold: float = typer.Option(10.0, "--loop-threshold", help="Loop detection threshold in meters"),
+    db: Optional[Path] = typer.Option(None, help="Database path"),
+) -> None:
+    """Analyze sequences: total distance, duration, loop detection."""
+    from scene_db.sequence_analysis import analyze_sequences
+
+    conn = get_connection(db)
+    seqs = analyze_sequences(conn, loop_threshold)
+    conn.close()
+
+    if not seqs:
+        typer.echo("No sequences found.")
+        return
+
+    typer.echo(f"{'Sequence':<45s} {'Dist':>8s} {'Dur':>7s} {'Spd':>5s} {'Yaw':>6s} {'Loop':>6s} {'Revisit':>7s}")
+    typer.echo("-" * 90)
+
+    for s in seqs:
+        dist_str = f"{s.total_distance_m:.0f} m" if s.total_distance_m < 1000 else f"{s.total_distance_m/1000:.1f} km"
+        dur_str = f"{s.duration_sec:.0f} s" if s.duration_sec < 600 else f"{s.duration_sec/60:.0f} min"
+        spd_str = f"{s.avg_speed_kmh:.0f}"
+        yaw_str = f"{s.max_yaw_rate_degs:.1f}"
+
+        if s.loop_distance_m < 0:
+            loop_str = "  -"
+        elif s.has_loop:
+            loop_str = f"\u2713 {s.loop_distance_m:.0f}m"
+        else:
+            loop_str = f"  {s.loop_distance_m:.0f}m"
+
+        revisit_str = str(s.revisit_count) if s.revisit_count > 0 else "-"
+
+        name = f"{s.dataset_name}/{s.sequence_id}"
+        if len(name) > 44:
+            name = name[:41] + "..."
+
+        typer.echo(f"  {name:<43s} {dist_str:>8s} {dur_str:>7s} {spd_str:>5s} {yaw_str:>6s} {loop_str:>6s} {revisit_str:>7s}")
+
+    typer.echo()
+    total_dist = sum(s.total_distance_m for s in seqs)
+    total_dur = sum(s.duration_sec for s in seqs)
+    loop_count = sum(1 for s in seqs if s.has_loop)
+    typer.echo(f"Total: {len(seqs)} sequences, "
+               f"{total_dist/1000:.1f} km, "
+               f"{total_dur/60:.0f} min, "
+               f"{loop_count} loops detected")
+
+
+@app.command()
 def stats(
     db: Optional[Path] = typer.Option(None, help="Database path"),
 ) -> None:
