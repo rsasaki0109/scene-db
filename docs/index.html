@@ -3,129 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>scene-db</title>
+    <title>scene-db &mdash; Find the failures hiding in your driving logs</title>
     <style>
         :root {
-            --bg: #0d1117;
-            --surface: #161b22;
-            --border: #30363d;
-            --text: #e6edf3;
-            --text-muted: #8b949e;
-            --accent: #58a6ff;
-            --accent-hover: #79c0ff;
+            --bg: #0a0e14;
+            --surface: #131920;
+            --surface-2: #1a2230;
+            --border: #1e2a3a;
+            --text: #e0e8f0;
+            --text-muted: #7a8a9e;
+            --accent: #4ea8f6;
+            --accent-hover: #70bcff;
+            --red: #f85149;
+            --orange: #e3983e;
+            --yellow: #e3d555;
             --green: #3fb950;
-            --orange: #d29922;
-            --code-bg: #1c2128;
+            --purple: #b48eff;
+            --code-bg: #0f1419;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
-            line-height: 1.6;
+            line-height: 1.7;
         }
-        .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+        .container { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
 
-        /* Hero */
+        /* ── Hero ── */
         .hero {
-            padding: 80px 0 60px;
+            padding: 80px 0 40px;
             text-align: center;
+            background: radial-gradient(ellipse at 50% 0%, rgba(78,168,246,0.08) 0%, transparent 60%);
+        }
+        .hero-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            margin-bottom: 20px;
         }
         .hero h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            letter-spacing: -0.02em;
+            font-size: 3.2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
         }
-        .hero h1 span { color: var(--accent); }
-        .hero p {
-            font-size: 1.25rem;
+        .hero h1 .thin { font-weight: 300; color: var(--text-muted); }
+        .hero .subtitle {
+            font-size: 1.2rem;
             color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto 32px;
+            max-width: 640px;
+            margin: 0 auto 36px;
         }
         .hero-actions {
             display: flex;
             gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
+            margin-bottom: 40px;
         }
         .btn {
             display: inline-block;
-            padding: 12px 24px;
+            padding: 12px 28px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.95rem;
             transition: all 0.2s;
         }
-        .btn-primary {
-            background: var(--accent);
-            color: var(--bg);
-        }
+        .btn-primary { background: var(--accent); color: #000; }
         .btn-primary:hover { background: var(--accent-hover); }
-        .btn-secondary {
-            background: var(--surface);
+        .btn-ghost {
             color: var(--text);
             border: 1px solid var(--border);
+            background: transparent;
         }
-        .btn-secondary:hover { border-color: var(--text-muted); }
+        .btn-ghost:hover { border-color: var(--text-muted); background: var(--surface); }
 
-        /* Install */
-        .install {
+        .install-bar {
             background: var(--code-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 16px 24px;
-            max-width: 480px;
-            margin: 32px auto 0;
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: 0.95rem;
+            padding: 14px 24px;
+            max-width: 440px;
+            margin: 0 auto;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+            font-size: 0.9rem;
             color: var(--green);
         }
-        .install .prompt { color: var(--text-muted); }
+        .install-bar .prompt { color: var(--text-muted); }
 
-        /* Features */
-        .features {
-            padding: 60px 0;
+        /* ── Problem ── */
+        .problem {
+            padding: 80px 0 60px;
         }
-        .features h2 {
+        .problem h2 {
+            font-size: 1.8rem;
             text-align: center;
-            font-size: 1.75rem;
-            margin-bottom: 40px;
+            margin-bottom: 16px;
+            font-weight: 700;
         }
-        .feature-grid {
+        .problem > .container > p {
+            text-align: center;
+            color: var(--text-muted);
+            max-width: 680px;
+            margin: 0 auto 48px;
+            font-size: 1.05rem;
+        }
+        .pain-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
         }
-        .feature-card {
+        .pain-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 24px;
+            border-left: 3px solid var(--red);
         }
-        .feature-card h3 {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
+        .pain-card h3 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+            color: var(--red);
         }
-        .feature-card p {
+        .pain-card p {
             color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-        .feature-icon {
-            font-size: 1.5rem;
-            margin-bottom: 12px;
+            font-size: 0.9rem;
         }
 
-        /* CLI Demo */
+        /* ── Edge Cases ── */
+        .edge-cases {
+            padding: 60px 0 80px;
+        }
+        .edge-cases h2 {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .edge-cases > .container > p {
+            text-align: center;
+            color: var(--text-muted);
+            max-width: 640px;
+            margin: 0 auto 48px;
+            font-size: 1.05rem;
+        }
+        .scenario-tabs {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+        .scenario-tab {
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .scenario-tab:hover, .scenario-tab.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--surface-2);
+        }
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .scenario-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            transition: border-color 0.2s;
+        }
+        .scenario-card:hover { border-color: var(--accent); }
+        .scenario-label {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+        }
+        .label-loc { background: rgba(180,142,255,0.15); color: var(--purple); }
+        .label-per { background: rgba(78,168,246,0.15); color: var(--accent); }
+        .label-both { background: rgba(227,152,62,0.15); color: var(--orange); }
+        .scenario-card h3 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+        .scenario-card p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-bottom: 12px;
+        }
+        .scenario-query {
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.82rem;
+            color: var(--green);
+            background: var(--code-bg);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .scenario-query .cmd { color: var(--text-muted); }
+
+        /* ── Demo ── */
         .demo {
-            padding: 60px 0;
+            padding: 60px 0 80px;
+            background: radial-gradient(ellipse at 50% 100%, rgba(78,168,246,0.04) 0%, transparent 60%);
         }
         .demo h2 {
             text-align: center;
-            font-size: 1.75rem;
-            margin-bottom: 40px;
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+        }
+        .demo > .container > p {
+            text-align: center;
+            color: var(--text-muted);
+            margin: 0 auto 40px;
+            max-width: 560px;
         }
         .terminal {
             background: var(--code-bg);
@@ -142,33 +255,40 @@
             gap: 8px;
             border-bottom: 1px solid var(--border);
         }
+        .terminal-title {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            margin-left: auto;
+            font-family: 'SF Mono', Consolas, monospace;
+        }
         .terminal-dot {
             width: 12px; height: 12px;
             border-radius: 50%;
-            background: var(--border);
         }
-        .terminal-dot.red { background: #f85149; }
-        .terminal-dot.yellow { background: var(--orange); }
-        .terminal-dot.green { background: var(--green); }
+        .terminal-dot.r { background: #f85149; }
+        .terminal-dot.y { background: #e3983e; }
+        .terminal-dot.g { background: #3fb950; }
         .terminal-body {
-            padding: 20px;
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: 0.9rem;
-            line-height: 1.7;
+            padding: 20px 24px;
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
             overflow-x: auto;
         }
-        .terminal-body .cmd { color: var(--green); }
-        .terminal-body .prompt { color: var(--text-muted); }
-        .terminal-body .output { color: var(--text-muted); }
-        .terminal-body .highlight { color: var(--accent); }
+        .t-p { color: var(--text-muted); }
+        .t-c { color: var(--green); }
+        .t-a { color: var(--accent); }
+        .t-o { color: #8a96a6; }
+        .t-w { color: var(--orange); }
+        .t-r { color: var(--red); }
 
-        /* Architecture */
+        /* ── Pipeline ── */
         .arch {
             padding: 60px 0;
         }
         .arch h2 {
             text-align: center;
-            font-size: 1.75rem;
+            font-size: 1.8rem;
             margin-bottom: 40px;
         }
         .pipeline {
@@ -183,155 +303,376 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 16px 20px;
+            padding: 18px 22px;
             text-align: center;
-            min-width: 140px;
+            min-width: 150px;
         }
-        .pipeline-step h4 { font-size: 0.95rem; margin-bottom: 4px; }
-        .pipeline-step p { font-size: 0.8rem; color: var(--text-muted); }
+        .pipeline-step h4 { font-size: 0.9rem; margin-bottom: 4px; }
+        .pipeline-step p { font-size: 0.78rem; color: var(--text-muted); }
         .pipeline-arrow {
             color: var(--text-muted);
             font-size: 1.5rem;
-            padding: 0 8px;
+            padding: 0 6px;
         }
 
-        /* Footer */
+        /* ── Features ── */
+        .features {
+            padding: 60px 0 80px;
+        }
+        .features h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 48px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+        }
+        .feature-card h3 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ── Datasets ── */
+        .datasets {
+            padding: 40px 0 60px;
+        }
+        .datasets h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 32px;
+        }
+        .dataset-row {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .dataset-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 24px;
+            min-width: 200px;
+        }
+        .dataset-badge .icon {
+            font-size: 1.8rem;
+        }
+        .dataset-badge .name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .dataset-badge .desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Footer ── */
         footer {
             border-top: 1px solid var(--border);
             padding: 40px 0;
             text-align: center;
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         footer a { color: var(--accent); text-decoration: none; }
         footer a:hover { text-decoration: underline; }
 
-        @media (max-width: 600px) {
+        @media (max-width: 640px) {
             .hero h1 { font-size: 2rem; }
-            .hero p { font-size: 1rem; }
             .pipeline { flex-direction: column; }
-            .pipeline-arrow { transform: rotate(90deg); }
+            .pipeline-arrow { transform: rotate(90deg); padding: 4px 0; }
         }
     </style>
 </head>
 <body>
 
+<!-- ── Hero ── -->
 <section class="hero">
     <div class="container">
-        <h1><span>scene-db</span></h1>
-        <p>Search and extract scenes from autonomous driving and robotics log data</p>
+        <div class="hero-badge">Localization &amp; Perception</div>
+        <h1>scene-db<br><span class="thin">Find the failures hiding in your driving logs</span></h1>
+        <p class="subtitle">
+            Ingest KITTI or nuScenes data, chunk by time, extract features &mdash;
+            then search for the exact edge cases that break your localization or perception stack.
+        </p>
         <div class="hero-actions">
             <a href="https://github.com/rsasaki0109/scene-db" class="btn btn-primary">GitHub</a>
-            <a href="#quickstart" class="btn btn-secondary">Quick Start</a>
+            <a href="#edge-cases" class="btn btn-ghost">See Edge Cases</a>
         </div>
-        <div class="install">
+        <div class="install-bar">
             <span class="prompt">$</span> pip install scene-db
         </div>
     </div>
 </section>
 
-<section class="features">
+<!-- ── Problem ── -->
+<section class="problem">
     <div class="container">
-        <h2>Features</h2>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <div class="feature-icon">&#x1F4E5;</div>
-                <h3>Dataset Ingestion</h3>
-                <p>Parse KITTI raw data (oxts, images, point clouds) and split into time-based scene chunks automatically.</p>
+        <h2>The problem</h2>
+        <p>
+            You have terabytes of rosbag / dataset logs. Somewhere in there are the 30-second clips
+            where your system failed &mdash; but finding them means scrubbing through hours of data.
+        </p>
+        <div class="pain-grid">
+            <div class="pain-card">
+                <h3>Localization drift after GPS outage</h3>
+                <p>Your EKF diverged under a tunnel, but the log is 2 hours long. Which 10 seconds matter?</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">&#x1F50D;</div>
-                <h3>Scene Search</h3>
-                <p>Search scenes by text queries on auto-generated captions describing vehicle motion and behavior.</p>
+            <div class="pain-card">
+                <h3>Missed detection at dusk</h3>
+                <p>Perception worked in daylight but silently dropped detections as lighting changed. Where exactly?</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">&#x1F4CA;</div>
-                <h3>Feature Extraction</h3>
-                <p>Compute speed, distance traveled, and generate rule-based captions for each scene chunk.</p>
+            <div class="pain-card">
+                <h3>Sudden stop = which scene?</h3>
+                <p>The vehicle braked hard. Was it a false positive from the planner, or a real obstacle the detector caught late?</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">&#x1F4E4;</div>
-                <h3>Scene Export</h3>
-                <p>Export specific scenes with all associated files (images, LiDAR, IMU) to a clean directory structure.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">&#x1F5C4;</div>
-                <h3>SQLite Storage</h3>
-                <p>Zero-dependency local storage. No servers, no setup. Everything in a single file.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">&#x2318;</div>
-                <h3>Simple CLI</h3>
-                <p>Four commands: ingest, index, search, export. That's it.</p>
+            <div class="pain-card">
+                <h3>"It works on my data"</h3>
+                <p>You need to share the exact failure scene with a teammate &mdash; not a 50GB bag file.</p>
             </div>
         </div>
     </div>
 </section>
 
+<!-- ── Edge Cases ── -->
+<section class="edge-cases" id="edge-cases">
+    <div class="container">
+        <h2>Edge cases you can surface</h2>
+        <p>
+            scene-db chunks your logs, computes motion features, and generates searchable captions.
+            Here are real queries your team can run:
+        </p>
+
+        <div class="scenario-tabs">
+            <span class="scenario-tab active">All</span>
+            <span class="scenario-tab">Localization</span>
+            <span class="scenario-tab">Perception</span>
+        </div>
+
+        <div class="scenario-grid">
+            <!-- Localization -->
+            <div class="scenario-card">
+                <span class="scenario-label label-loc">Localization</span>
+                <h3>Sudden speed drop after high speed</h3>
+                <p>Find scenes where the vehicle decelerates sharply &mdash; potential localization jumps or GPS multipath near buildings.</p>
+                <div class="scenario-query"><span class="cmd">$</span> scene-db search <span class="t-a">"stationary"</span></div>
+            </div>
+            <div class="scenario-card">
+                <span class="scenario-label label-loc">Localization</span>
+                <h3>Low-speed maneuvering</h3>
+                <p>Parking lots and U-turns where dead-reckoning accumulates drift. Wheel odometry vs. IMU divergence lives here.</p>
+                <div class="scenario-query"><span class="cmd">$</span> scene-db search <span class="t-a">"moving slowly"</span></div>
+            </div>
+            <div class="scenario-card">
+                <span class="scenario-label label-loc">Localization</span>
+                <h3>High-speed highway</h3>
+                <p>GPS updates arrive at 10 Hz but you're covering 30 m/s. Any latency in the fusion pipeline shows up here.</p>
+                <div class="scenario-query"><span class="cmd">$</span> scene-db search <span class="t-a">"high speed"</span></div>
+            </div>
+
+            <!-- Perception -->
+            <div class="scenario-card">
+                <span class="scenario-label label-per">Perception</span>
+                <h3>Scenes with poor visibility</h3>
+                <p>Low contrast, overexposure, rain on lens. VLM captions catch what rule-based features miss.</p>
+                <div class="scenario-query"><span class="cmd">$</span> scene-db search -s <span class="t-a">"dark road with glare"</span></div>
+            </div>
+            <div class="scenario-card">
+                <span class="scenario-label label-per">Perception</span>
+                <h3>Crowded intersections</h3>
+                <p>Multiple pedestrians, cyclists, turning vehicles &mdash; the combinatorial explosion that detectors struggle with.</p>
+                <div class="scenario-query"><span class="cmd">$</span> scene-db search -s <span class="t-a">"busy intersection pedestrians"</span></div>
+            </div>
+            <div class="scenario-card">
+                <span class="scenario-label label-per">Perception</span>
+                <h3>Construction zones</h3>
+                <p>Temporary signs, cones, lane shifts. Your HD map is wrong and perception is all you have.</p>
+                <div class="scenario-query"><span class="cmd">$</span> scene-db search -s <span class="t-a">"construction zone cones"</span></div>
+            </div>
+
+            <!-- Both -->
+            <div class="scenario-card">
+                <span class="scenario-label label-both">Loc + Per</span>
+                <h3>Tunnels &amp; underpasses</h3>
+                <p>GPS denied + lighting transition. Localization falls back to LiDAR/IMU while cameras adapt to darkness.</p>
+                <div class="scenario-query"><span class="cmd">$</span> scene-db search -s <span class="t-a">"tunnel entrance dark"</span></div>
+            </div>
+            <div class="scenario-card">
+                <span class="scenario-label label-both">Loc + Per</span>
+                <h3>Wet road reflections</h3>
+                <p>LiDAR gets ghost returns from puddles. Camera sees reflected sky. Both stacks get confused simultaneously.</p>
+                <div class="scenario-query"><span class="cmd">$</span> scene-db search -s <span class="t-a">"wet road reflections rain"</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Demo ── -->
 <section class="demo" id="quickstart">
     <div class="container">
-        <h2>Quick Start</h2>
+        <h2>Workflow: find &rarr; search &rarr; export &rarr; fix</h2>
+        <p>Ingest once, query forever. Export just the frames you need for debugging or retraining.</p>
 
         <div class="terminal">
             <div class="terminal-header">
-                <div class="terminal-dot red"></div>
-                <div class="terminal-dot yellow"></div>
-                <div class="terminal-dot green"></div>
+                <div class="terminal-dot r"></div>
+                <div class="terminal-dot y"></div>
+                <div class="terminal-dot g"></div>
+                <div class="terminal-title">scene-db</div>
             </div>
             <div class="terminal-body">
-<span class="prompt">$</span> <span class="cmd">scene-db ingest</span> /data/kitti/2011_09_26_drive_0001_sync<br>
-<span class="output">Ingesting /data/kitti/2011_09_26_drive_0001_sync ...</span><br>
-<span class="output">Done. Created <span class="highlight">24</span> scene chunks.</span><br>
+<span class="t-o"># 1. Ingest a KITTI sequence (108 frames &rarr; 3 chunks)</span><br>
+<span class="t-p">$</span> <span class="t-c">scene-db ingest</span> /data/kitti/2011_09_26_drive_0001_sync<br>
+<span class="t-o">Ingesting ... Done. Created <span class="t-a">3</span> scene chunks.</span><br>
 <br>
-<span class="prompt">$</span> <span class="cmd">scene-db search</span> "moving forward"<br>
-<span class="output">Found <span class="highlight">12</span> scene(s):</span><br>
+<span class="t-o"># 2. Search for low-speed scenes (localization edge case)</span><br>
+<span class="t-p">$</span> <span class="t-c">scene-db search</span> "moving slowly"<br>
+<span class="t-o">Found <span class="t-a">1</span> scene(s):</span><br>
 <br>
-<span class="output">&nbsp;&nbsp;[<span class="highlight">kitti_2011_09_26_drive_0001_sync_003</span>]</span><br>
-<span class="output">&nbsp;&nbsp;&nbsp;&nbsp;vehicle moving forward, 42 km/h, traveled 58.3 m</span><br>
-<span class="output">&nbsp;&nbsp;&nbsp;&nbsp;frames 30-39, 2011-09-26T13:02:40 - 2011-09-26T13:02:44</span><br>
+<span class="t-o">&nbsp;&nbsp;[<span class="t-a">kitti_..._sync_002</span>]</span><br>
+<span class="t-o">&nbsp;&nbsp;&nbsp;&nbsp;vehicle moving slowly, 19 km/h, traveled 4.9 m</span><br>
+<span class="t-o">&nbsp;&nbsp;&nbsp;&nbsp;frames 98-107</span><br>
 <br>
-<span class="prompt">$</span> <span class="cmd">scene-db export</span> --id kitti_2011_09_26_drive_0001_sync_003 -o ./my_scene<br>
-<span class="output">Exported <span class="highlight">50</span> files to ./my_scene</span><br>
+<span class="t-o"># 3. Semantic search (VLM + embedding)</span><br>
+<span class="t-p">$</span> <span class="t-c">scene-db search -s</span> "vehicle decelerating near parked cars"<br>
+<span class="t-o">Found <span class="t-a">2</span> scene(s):</span><br>
+<br>
+<span class="t-o">&nbsp;&nbsp;[<span class="t-a">kitti_..._sync_002</span>] (score: <span class="t-w">0.847</span>)</span><br>
+<span class="t-o">&nbsp;&nbsp;&nbsp;&nbsp;residential street, parked cars on both sides, vehicle slowing down</span><br>
+<br>
+<span class="t-o"># 4. Export the scene for debugging</span><br>
+<span class="t-p">$</span> <span class="t-c">scene-db export</span> --id kitti_..._sync_002 -o ./debug_scene<br>
+<span class="t-o">Exported <span class="t-a">50</span> files to ./debug_scene</span><br>
             </div>
         </div>
     </div>
 </section>
 
+<!-- ── Pipeline ── -->
 <section class="arch">
     <div class="container">
-        <h2>Pipeline</h2>
+        <h2>How it works</h2>
         <div class="pipeline">
             <div class="pipeline-step">
-                <h4>KITTI Raw</h4>
-                <p>oxts, images, LiDAR</p>
+                <h4>Raw Logs</h4>
+                <p>KITTI / nuScenes</p>
             </div>
-            <div class="pipeline-arrow">&#x2192;</div>
+            <div class="pipeline-arrow">&rarr;</div>
             <div class="pipeline-step">
-                <h4>Ingest</h4>
-                <p>Parse &amp; chunk</p>
+                <h4>Chunk</h4>
+                <p>5-sec time windows</p>
             </div>
-            <div class="pipeline-arrow">&#x2192;</div>
+            <div class="pipeline-arrow">&rarr;</div>
             <div class="pipeline-step">
-                <h4>Features</h4>
-                <p>Speed, distance, caption</p>
+                <h4>Extract</h4>
+                <p>speed, distance, yaw</p>
             </div>
-            <div class="pipeline-arrow">&#x2192;</div>
+            <div class="pipeline-arrow">&rarr;</div>
             <div class="pipeline-step">
-                <h4>SQLite</h4>
-                <p>SceneChunk DB</p>
+                <h4>Caption</h4>
+                <p>rule-based or VLM</p>
             </div>
-            <div class="pipeline-arrow">&#x2192;</div>
+            <div class="pipeline-arrow">&rarr;</div>
             <div class="pipeline-step">
-                <h4>Search / Export</h4>
-                <p>Query &amp; extract</p>
+                <h4>Index</h4>
+                <p>SQLite + embeddings</p>
+            </div>
+            <div class="pipeline-arrow">&rarr;</div>
+            <div class="pipeline-step">
+                <h4>Search</h4>
+                <p>text or semantic</p>
             </div>
         </div>
     </div>
 </section>
 
+<!-- ── Features ── -->
+<section class="features">
+    <div class="container">
+        <h2>Built for robotics engineers</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>No infra required</h3>
+                <p>SQLite on disk. No Docker, no Postgres, no Elasticsearch. Install with pip, run from your terminal.</p>
+            </div>
+            <div class="feature-card">
+                <h3>VLM captioning</h3>
+                <p>Optional GPT-4o integration generates rich scene descriptions from camera images. Falls back to rule-based if no API key.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Semantic search</h3>
+                <p>Embedding-based similarity search with sentence-transformers. Find scenes by meaning, not just keywords.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Export for replay</h3>
+                <p>Extract the exact images, point clouds, and IMU data for a scene. Feed it straight into your replay pipeline.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Multi-dataset</h3>
+                <p>KITTI and nuScenes today. Same SceneChunk model regardless of source. Easy to add your own format.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Four commands</h3>
+                <p><code>ingest</code> <code>index</code> <code>search</code> <code>export</code> &mdash; no YAML configs, no pipeline DSLs, no ceremony.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Datasets ── -->
+<section class="datasets">
+    <div class="container">
+        <h2>Supported datasets</h2>
+        <div class="dataset-row">
+            <div class="dataset-badge">
+                <div class="icon">&#x1F697;</div>
+                <div>
+                    <div class="name">KITTI</div>
+                    <div class="desc">oxts, cameras, LiDAR</div>
+                </div>
+            </div>
+            <div class="dataset-badge">
+                <div class="icon">&#x1F6F0;</div>
+                <div>
+                    <div class="name">nuScenes</div>
+                    <div class="desc">6 cameras, LiDAR, RADAR</div>
+                </div>
+            </div>
+            <div class="dataset-badge" style="border-style: dashed; opacity: 0.5;">
+                <div class="icon">&#x2795;</div>
+                <div>
+                    <div class="name">Your format</div>
+                    <div class="desc">Add an ingest module</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Footer ��─ -->
 <footer>
     <div class="container">
-        <p>scene-db &mdash; MIT License &mdash; <a href="https://github.com/rsasaki0109/scene-db">GitHub</a></p>
+        <p>
+            scene-db &mdash; MIT License &mdash;
+            <a href="https://github.com/rsasaki0109/scene-db">GitHub</a> &middot;
+            <a href="https://github.com/rsasaki0109/scene-db#installation">Install</a> &middot;
+            <a href="https://github.com/rsasaki0109/scene-db#cli-reference">Docs</a>
+        </p>
     </div>
 </footer>
 
