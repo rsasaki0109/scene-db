@@ -15,11 +15,13 @@ app = typer.Typer(help="Search and extract scenes from autonomous driving log da
 
 @app.command()
 def ingest(
-    dataset_path: Path = typer.Argument(..., help="Path to dataset directory"),
-    dataset_name: str = typer.Option("kitti", help="Dataset name (kitti or nuscenes)"),
+    dataset_path: Path = typer.Argument(..., help="Path to dataset directory or bag file"),
+    dataset_name: str = typer.Option("auto", help="Format: auto, kitti, nuscenes, rosbag"),
     chunk_duration: float = typer.Option(5.0, help="Chunk duration in seconds"),
     vlm: bool = typer.Option(False, "--vlm", help="Use VLM for richer captions (requires OPENAI_API_KEY)"),
     nuscenes_version: str = typer.Option("v1.0-mini", help="nuScenes version subdirectory"),
+    imu_topic: Optional[str] = typer.Option(None, "--imu-topic", help="IMU topic name (rosbag)"),
+    odom_topic: Optional[str] = typer.Option(None, "--odom-topic", help="Odometry topic name (rosbag)"),
     db: Optional[Path] = typer.Option(None, help="Database path (default: ~/.scene-db/scene.db)"),
 ) -> None:
     """Ingest a dataset sequence into the scene database."""
@@ -27,13 +29,33 @@ def ingest(
         typer.echo(f"Error: path does not exist: {dataset_path}", err=True)
         raise typer.Exit(1)
 
-    typer.echo(f"Ingesting {dataset_path} (format: {dataset_name}) ...")
+    # Auto-detect format
+    fmt = dataset_name
+    if fmt == "auto":
+        if dataset_path.suffix == ".bag":
+            fmt = "rosbag"
+        elif (dataset_path / "oxts").exists():
+            fmt = "kitti"
+        elif any((dataset_path / v).exists() for v in ["v1.0-mini", "v1.0-trainval"]):
+            fmt = "nuscenes"
+        else:
+            fmt = "kitti"
+
+    typer.echo(f"Ingesting {dataset_path} (format: {fmt}) ...")
     try:
-        if dataset_name == "nuscenes":
+        if fmt == "rosbag":
+            from scene_db.ingest_rosbag import ingest_rosbag
+            n = ingest_rosbag(
+                dataset_path, dataset_name=dataset_path.stem,
+                chunk_duration_sec=chunk_duration,
+                imu_topic=imu_topic, odom_topic=odom_topic,
+                db_path=db,
+            )
+        elif fmt == "nuscenes":
             from scene_db.ingest_nuscenes import ingest_nuscenes
             n = ingest_nuscenes(dataset_path, nuscenes_version, chunk_duration, db)
         else:
-            n = ingest_sequence(dataset_path, dataset_name, chunk_duration, db, use_vlm=vlm)
+            n = ingest_sequence(dataset_path, fmt, chunk_duration, db, use_vlm=vlm)
     except FileNotFoundError as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
