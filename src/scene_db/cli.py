@@ -38,6 +38,9 @@ def ingest(
             fmt = "kitti"
         elif any((dataset_path / v).exists() for v in ["v1.0-mini", "v1.0-trainval"]):
             fmt = "nuscenes"
+        elif any((dataset_path / c / "run1" / "reference.csv").exists()
+                 for c in ["tokyo", "nagoya", "osaka"] if (dataset_path / c).exists()):
+            fmt = "ppc"
         else:
             fmt = "kitti"
 
@@ -54,6 +57,9 @@ def ingest(
         elif fmt == "nuscenes":
             from scene_db.ingest_nuscenes import ingest_nuscenes
             n = ingest_nuscenes(dataset_path, nuscenes_version, chunk_duration, db)
+        elif fmt == "ppc":
+            from scene_db.ingest_ppc import ingest_ppc
+            n = ingest_ppc(dataset_path, chunk_duration, db)
         else:
             n = ingest_sequence(dataset_path, fmt, chunk_duration, db, use_vlm=vlm)
     except FileNotFoundError as e:
